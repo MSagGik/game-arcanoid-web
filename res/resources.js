@@ -53,12 +53,14 @@ const GAME_RESOURCES = {
     },
 
     SETTINGS: {
-        paddleSpeed: 9,
-        ballBaseSpeed: 6.2,
+        paddleSpeed: 540,   // 9 × 60
+        ballBaseSpeed: 372, // 6.2 × 60
         initialLives: 3,
         brickRows: 8,
         brickCols: 10,
-        levelOffsetY: 72
+        levelOffsetY: 72,
+        wallPadding: 8,
+        ballOffsetFromPaddle: 2
     }
 };
 
