@@ -27,6 +27,7 @@ class ArkanoidGame {
             baseSpeed: this.SETTINGS.ballBaseSpeed
         };
 
+        this.aliveBricks = 0;
         this.bricks = [];
         this.score = 0;
         this.lives = this.SETTINGS.initialLives;
@@ -72,6 +73,7 @@ class ArkanoidGame {
     }
 
     createLevel() {
+        this.aliveBricks = 0;
         this.bricks = [];
 
         const rows = this.SETTINGS.brickRows;
@@ -96,6 +98,8 @@ class ArkanoidGame {
                     visible: true,
                     points: (rows - r) * 10
                 });
+
+                this.aliveBricks++;
             }
         }
     }
@@ -177,8 +181,9 @@ class ArkanoidGame {
                 this.ball.y - this.ball.radius < b.y + b.height) {
 
                 b.hitsLeft--;
-                if (b.hitsLeft <= 0) {
+                if (b.hitsLeft <= 0 && b.visible) {
                     b.visible = false;
+                    this.aliveBricks--;
                     this.score += b.points;
                 }
 
@@ -203,7 +208,7 @@ class ArkanoidGame {
             return;
         }
 
-        if (this.bricks.every(b => !b.visible)) {
+        if (this.aliveBricks === 0) {
             this.gameState = GAME_STATE.LEVEL_CLEAR;
             setTimeout(() => {
                 this.level++;
