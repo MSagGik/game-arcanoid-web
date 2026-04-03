@@ -78,10 +78,13 @@ class ArkanoidGame {
 
         const rows = this.SETTINGS.brickRows;
         const cols = this.SETTINGS.brickCols;
-
-        const totalWidth = cols * (this.S.brickWidth + this.S.brickPadding) - this.S.brickPadding;
-        const offsetX = (this.WIDTH - totalWidth) / 2;
+        const brickW = this.S.brickWidth;
+        const brickH = this.S.brickHeight;
+        const gap = this.S.brickPadding;
         const offsetY = this.SETTINGS.levelOffsetY;
+
+        const totalWidth = cols * (brickW + gap) - gap;
+        const offsetX = (this.WIDTH - totalWidth) / 2;
 
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
@@ -89,10 +92,10 @@ class ArkanoidGame {
                 if (r === 7 && (c < 3 || c > 6)) continue;
 
                 this.bricks.push({
-                    x: offsetX + c * (this.S.brickWidth + this.S.brickPadding),
-                    y: offsetY + r * (this.S.brickHeight + this.S.brickPadding),
-                    width: this.S.brickWidth,
-                    height: this.S.brickHeight,
+                    x: offsetX + c * (brickW + gap),
+                    y: offsetY + r * (brickH + gap),
+                    width: brickW,
+                    height: brickH,
                     color: this.R.bricks[r],
                     hitsLeft: (r < 2) ? 2 : 1,
                     visible: true,
@@ -106,7 +109,7 @@ class ArkanoidGame {
 
     resetBall() {
         this.ball.x = this.paddle.x + this.paddle.width / 2;
-        this.ball.y = this.paddle.y - this.ball.radius - 2;
+        this.ball.y = this.paddle.y - this.ball.radius - this.SETTINGS.ballOffsetFromPaddle;
         this.ball.vx = 0;
         this.ball.vy = 0;
         this.ballAttached = true;
@@ -123,14 +126,51 @@ class ArkanoidGame {
         this.ball.vy = -Math.cos(angle) * this.ball.baseSpeed;
     }
 
+    isBallCollidingWithBrick(brick) {
+        return (
+            this.ball.x + this.ball.radius > brick.x &&
+            this.ball.x - this.ball.radius < brick.x + brick.width &&
+            this.ball.y + this.ball.radius > brick.y &&
+            this.ball.y - this.ball.radius < brick.y + brick.height
+        );
+    }
+
+    handleBrickCollision(brick) {
+        brick.hitsLeft--;
+
+        if (brick.hitsLeft <= 0 && brick.visible) {
+            brick.visible = false;
+            this.aliveBricks--;
+            this.score += brick.points;
+        }
+
+        const overlapL = (this.ball.x + this.ball.radius) - brick.x;
+        const overlapR = (brick.x + brick.width) - (this.ball.x - this.ball.radius);
+        const overlapT = (this.ball.y + this.ball.radius) - brick.y;
+        const overlapB = (brick.y + brick.height) - (this.ball.y - this.ball.radius);
+
+        const minOverlap = Math.min(overlapL, overlapR, overlapT, overlapB);
+
+        if (minOverlap === overlapT || minOverlap === overlapB) {
+            this.ball.vy = -this.ball.vy;
+        } else {
+            this.ball.vx = -this.ball.vx;
+        }
+    }
+
     update() {
-        if (this.gameState === GAME_STATE.PAUSED || this.gameState === GAME_STATE.GAME_OVER || this.gameState === GAME_STATE.LEVEL_CLEAR) return;
+        if (this.gameState === GAME_STATE.PAUSED ||
+            this.gameState === GAME_STATE.GAME_OVER ||
+            this.gameState === GAME_STATE.LEVEL_CLEAR) return;
 
         this.paddle.x = this.mouseX - this.paddle.width / 2;
         if (this.keys['ArrowLeft'] || this.keys['a'] || this.keys['A']) this.paddle.x -= this.paddle.speed;
         if (this.keys['ArrowRight'] || this.keys['d'] || this.keys['D']) this.paddle.x += this.paddle.speed;
 
-        this.paddle.x = Math.max(8, Math.min(this.WIDTH - this.paddle.width - 8, this.paddle.x));
+        this.paddle.x = Math.max(
+            this.SETTINGS.wallPadding,
+            Math.min(this.WIDTH - this.paddle.width - 8, this.paddle.x)
+        );
 
         if (this.ballAttached) {
             this.ball.x = this.paddle.x + this.paddle.width / 2;
@@ -141,9 +181,20 @@ class ArkanoidGame {
         this.ball.x += this.ball.vx;
         this.ball.y += this.ball.vy;
 
-        if (this.ball.x - this.ball.radius < 8) { this.ball.x = 8 + this.ball.radius; this.ball.vx = Math.abs(this.ball.vx); }
-        if (this.ball.x + this.ball.radius > this.WIDTH - 8) { this.ball.x = this.WIDTH - 8 - this.ball.radius; this.ball.vx = -Math.abs(this.ball.vx); }
-        if (this.ball.y - this.ball.radius < 8) { this.ball.y = 8 + this.ball.radius; this.ball.vy = Math.abs(this.ball.vy); }
+        if (this.ball.x - this.ball.radius < this.SETTINGS.wallPadding) {
+            this.ball.x = this.SETTINGS.wallPadding + this.ball.radius;
+            this.ball.vx = Math.abs(this.ball.vx);
+        }
+
+        if (this.ball.x + this.ball.radius > this.WIDTH - this.SETTINGS.wallPadding) {
+            this.ball.x = this.WIDTH - this.SETTINGS.wallPadding - this.ball.radius;
+            this.ball.vx = -Math.abs(this.ball.vx);
+        }
+
+        if (this.ball.y - this.ball.radius < this.SETTINGS.wallPadding) {
+            this.ball.y = this.SETTINGS.wallPadding + this.ball.radius;
+            this.ball.vy = Math.abs(this.ball.vy);
+        }
 
         if (this.ball.y + this.ball.radius > this.HEIGHT) {
             this.lives--;
@@ -175,30 +226,8 @@ class ArkanoidGame {
             const b = this.bricks[i];
             if (!b.visible) continue;
 
-            if (this.ball.x + this.ball.radius > b.x &&
-                this.ball.x - this.ball.radius < b.x + b.width &&
-                this.ball.y + this.ball.radius > b.y &&
-                this.ball.y - this.ball.radius < b.y + b.height) {
-
-                b.hitsLeft--;
-                if (b.hitsLeft <= 0 && b.visible) {
-                    b.visible = false;
-                    this.aliveBricks--;
-                    this.score += b.points;
-                }
-
-                const overlapL = (this.ball.x + this.ball.radius) - b.x;
-                const overlapR = (b.x + b.width) - (this.ball.x - this.ball.radius);
-                const overlapT = (this.ball.y + this.ball.radius) - b.y;
-                const overlapB = (b.y + b.height) - (this.ball.y - this.ball.radius);
-
-                const minOverlap = Math.min(overlapL, overlapR, overlapT, overlapB);
-
-                if (minOverlap === overlapT || minOverlap === overlapB) {
-                    this.ball.vy = -this.ball.vy;
-                } else {
-                    this.ball.vx = -this.ball.vx;
-                }
+            if (this.isBallCollidingWithBrick(b)) {
+                this.handleBrickCollision(b);
                 break;
             }
         }

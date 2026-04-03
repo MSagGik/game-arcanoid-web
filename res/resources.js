@@ -58,7 +58,9 @@ const GAME_RESOURCES = {
         initialLives: 3,
         brickRows: 8,
         brickCols: 10,
-        levelOffsetY: 72
+        levelOffsetY: 72,
+        wallPadding: 8,
+        ballOffsetFromPaddle: 2
     }
 };
 
