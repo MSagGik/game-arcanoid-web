@@ -6,34 +6,34 @@ class ArkanoidGame {
         this.WIDTH = this.canvas.width;
         this.HEIGHT = this.canvas.height;
 
-        const R = GAME_RESOURCES.COLORS;
-        const S = GAME_RESOURCES.SIZES;
-        const SETTINGS = GAME_RESOURCES.SETTINGS;
+        this.R = GAME_RESOURCES.COLORS;
+        this.S = GAME_RESOURCES.SIZES;
+        this.SETTINGS = GAME_RESOURCES.SETTINGS;
 
         this.paddle = {
-            width: S.paddleWidth,
-            height: S.paddleHeight,
-            x: (this.WIDTH - S.paddleWidth) / 2,
+            width: this.S.paddleWidth,
+            height: this.S.paddleHeight,
+            x: (this.WIDTH - this.S.paddleWidth) / 2,
             y: this.HEIGHT - 38,
-            speed: SETTINGS.paddleSpeed
+            speed: this.SETTINGS.paddleSpeed
         };
 
         this.ball = {
-            radius: S.ballRadius,
+            radius: this.S.ballRadius,
             x: 0,
             y: 0,
             vx: 0,
             vy: 0,
-            baseSpeed: SETTINGS.ballBaseSpeed
+            baseSpeed: this.SETTINGS.ballBaseSpeed
         };
 
         this.bricks = [];
         this.score = 0;
-        this.lives = SETTINGS.initialLives;
+        this.lives = this.SETTINGS.initialLives;
         this.level = 1;
         this.gameState = 'ready';
 
-        this.keys = {};
+        this.keys = Object.create(null);
         this.mouseX = this.WIDTH / 2;
 
         this.ballAttached = true;
@@ -73,16 +73,13 @@ class ArkanoidGame {
 
     createLevel() {
         this.bricks = [];
-        const S = GAME_RESOURCES.SIZES;
-        const R = GAME_RESOURCES.COLORS;
-        const SETTINGS = GAME_RESOURCES.SETTINGS;
 
-        const rows = SETTINGS.brickRows;
-        const cols = SETTINGS.brickCols;
+        const rows = this.SETTINGS.brickRows;
+        const cols = this.SETTINGS.brickCols;
 
-        const totalWidth = cols * (S.brickWidth + S.brickPadding) - S.brickPadding;
+        const totalWidth = cols * (this.S.brickWidth + this.S.brickPadding) - this.S.brickPadding;
         const offsetX = (this.WIDTH - totalWidth) / 2;
-        const offsetY = SETTINGS.levelOffsetY;
+        const offsetY = this.SETTINGS.levelOffsetY;
 
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
@@ -90,11 +87,11 @@ class ArkanoidGame {
                 if (r === 7 && (c < 3 || c > 6)) continue;
 
                 this.bricks.push({
-                    x: offsetX + c * (S.brickWidth + S.brickPadding),
-                    y: offsetY + r * (S.brickHeight + S.brickPadding),
-                    width: S.brickWidth,
-                    height: S.brickHeight,
-                    color: R.bricks[r],
+                    x: offsetX + c * (this.S.brickWidth + this.S.brickPadding),
+                    y: offsetY + r * (this.S.brickHeight + this.S.brickPadding),
+                    width: this.S.brickWidth,
+                    height: this.S.brickHeight,
+                    color: this.R.bricks[r],
                     hitsLeft: (r < 2) ? 2 : 1,
                     visible: true,
                     points: (rows - r) * 10
@@ -217,56 +214,56 @@ class ArkanoidGame {
     }
 
     draw() {
-        const R = GAME_RESOURCES.COLORS;
+//        const R = GAME_RESOURCES.COLORS;
 
-        this.ctx.fillStyle = R.background;
+        this.ctx.fillStyle = this.R.background;
         this.ctx.fillRect(0, 0, this.WIDTH, this.HEIGHT);
 
         for (let b of this.bricks) {
             if (!b.visible) continue;
             this.ctx.fillStyle = b.color;
             this.ctx.fillRect(b.x, b.y, b.width, b.height);
-            this.ctx.fillStyle = R.brickHighlight;
+            this.ctx.fillStyle = this.R.brickHighlight;
             this.ctx.fillRect(b.x + 4, b.y + 4, b.width - 12, 6);
-            this.ctx.strokeStyle = R.brickStroke;
+            this.ctx.strokeStyle = this.R.brickStroke;
             this.ctx.lineWidth = 3;
             this.ctx.strokeRect(b.x + 2, b.y + 2, b.width - 4, b.height - 4);
 
             if (b.hitsLeft > 1) {
-                this.ctx.fillStyle = R.brickDoubleHit;
+                this.ctx.fillStyle = this.R.brickDoubleHit;
                 this.ctx.globalAlpha = 0.3;
                 this.ctx.fillRect(b.x + 8, b.y + 8, b.width - 16, b.height - 16);
                 this.ctx.globalAlpha = 1;
             }
         }
 
-        this.ctx.fillStyle = R.paddle;
+        this.ctx.fillStyle = this.R.paddle;
         this.ctx.shadowBlur = 25;
-        this.ctx.shadowColor = R.paddle;
+        this.ctx.shadowColor = this.R.paddle;
         this.ctx.fillRect(this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height);
         this.ctx.shadowBlur = 5;
-        this.ctx.fillStyle = R.paddleHighlight;
+        this.ctx.fillStyle = this.R.paddleHighlight;
         this.ctx.fillRect(this.paddle.x + 8, this.paddle.y + 3, this.paddle.width - 28, 5);
 
         const grad = this.ctx.createRadialGradient(this.ball.x-3, this.ball.y-3, 2, this.ball.x, this.ball.y, this.ball.radius);
-        grad.addColorStop(0, R.ballLight);
-        grad.addColorStop(1, R.ballMain);
+        grad.addColorStop(0, this.R.ballLight);
+        grad.addColorStop(1, this.R.ballMain);
         this.ctx.fillStyle = grad;
         this.ctx.shadowBlur = 15;
-        this.ctx.shadowColor = R.ballShadow;
+        this.ctx.shadowColor = this.R.ballShadow;
         this.ctx.beginPath();
         this.ctx.arc(this.ball.x, this.ball.y, this.ball.radius, 0, Math.PI * 2);
         this.ctx.fill();
         this.ctx.shadowBlur = 0;
 
-        this.ctx.fillStyle = R.textHUD;
+        this.ctx.fillStyle = this.R.textHUD;
         this.ctx.font = 'bold 22px Courier New';
         this.ctx.fillText(`SCORE ${String(this.score).padStart(6, '0')}`, 42, 22);
         this.ctx.fillText(`LIVES ${this.lives}`, this.WIDTH - 158, 22);
         this.ctx.fillText(`LEVEL ${this.level}`, this.WIDTH / 2 - 48, 22);
 
         if (this.ballAttached && this.gameState === 'ready') {
-            this.ctx.fillStyle = R.textReady;
+            this.ctx.fillStyle = this.R.textReady;
             this.ctx.font = 'bold 26px Courier New';
             this.ctx.textAlign = 'center';
             this.ctx.fillText('НАЖМИ ПРОБЕЛ ИЛИ КЛИКНИ', this.WIDTH/2, this.HEIGHT/2 + 80);
@@ -276,9 +273,9 @@ class ArkanoidGame {
         }
 
         if (this.gameState === 'paused') {
-            this.ctx.fillStyle = R.overlayPaused;
+            this.ctx.fillStyle = this.R.overlayPaused;
             this.ctx.fillRect(0, 0, this.WIDTH, this.HEIGHT);
-            this.ctx.fillStyle = R.textPaused;
+            this.ctx.fillStyle = this.R.textPaused;
             this.ctx.font = 'bold 48px Courier New';
             this.ctx.textAlign = 'center';
             this.ctx.fillText('PAUSED', this.WIDTH/2, this.HEIGHT/2);
@@ -286,24 +283,24 @@ class ArkanoidGame {
         }
 
         if (this.gameState === 'gameover') {
-            this.ctx.fillStyle = R.overlayGameOver;
+            this.ctx.fillStyle = this.R.overlayGameOver;
             this.ctx.fillRect(0, 0, this.WIDTH, this.HEIGHT);
-            this.ctx.fillStyle = R.textGameOver;
+            this.ctx.fillStyle = this.R.textGameOver;
             this.ctx.font = 'bold 56px Courier New';
             this.ctx.textAlign = 'center';
             this.ctx.fillText('GAME OVER', this.WIDTH/2, this.HEIGHT/2 - 30);
             this.ctx.font = 'bold 26px Courier New';
-            this.ctx.fillStyle = R.textFinalScore;
+            this.ctx.fillStyle = this.R.textFinalScore;
             this.ctx.fillText(`FINAL SCORE: ${this.score}`, this.WIDTH/2, this.HEIGHT/2 + 40);
             this.ctx.textAlign = 'left';
         }
 
         if (this.gameState === 'levelclear') {
-            this.ctx.fillStyle = R.textLevelClear;
+            this.ctx.fillStyle = this.R.textLevelClear;
             this.ctx.font = 'bold 42px Courier New';
             this.ctx.textAlign = 'center';
             this.ctx.shadowBlur = 30;
-            this.ctx.shadowColor = R.textLevelClear;
+            this.ctx.shadowColor = this.R.textLevelClear;
             this.ctx.fillText('LEVEL CLEAR!', this.WIDTH/2, this.HEIGHT/2);
             this.ctx.shadowBlur = 0;
             this.ctx.textAlign = 'left';
