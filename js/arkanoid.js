@@ -37,7 +37,6 @@ class ArkanoidGame {
         this.mouseX = this.WIDTH / 2;
 
         this.ballAttached = true;
-        this.lastTime = 0;
 
         this.initEventListeners();
         this.createLevel();
@@ -125,8 +124,6 @@ class ArkanoidGame {
 
     update() {
         if (this.gameState === 'paused' || this.gameState === 'gameover' || this.gameState === 'levelclear') return;
-
-        const SETTINGS = GAME_RESOURCES.SETTINGS;
 
         this.paddle.x = this.mouseX - this.paddle.width / 2;
         if (this.keys['ArrowLeft'] || this.keys['a'] || this.keys['A']) this.paddle.x -= this.paddle.speed;
