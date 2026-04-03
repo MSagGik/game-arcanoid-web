@@ -31,7 +31,7 @@ class ArkanoidGame {
         this.score = 0;
         this.lives = this.SETTINGS.initialLives;
         this.level = 1;
-        this.gameState = 'ready';
+        this.gameState = GAME_STATE.READY;
 
         this.keys = Object.create(null);
         this.mouseX = this.WIDTH / 2;
@@ -46,12 +46,16 @@ class ArkanoidGame {
     initEventListeners() {
         window.addEventListener('keydown', (e) => {
             this.keys[e.key] = true;
-            if (e.key === ' ' && this.ballAttached && this.gameState === 'ready') {
+
+            if (['ArrowLeft', 'ArrowRight'].includes(e.key)) e.preventDefault();
+
+            if (e.key === ' ' && this.ballAttached && this.gameState === GAME_STATE.READY) {
                 e.preventDefault();
                 this.launchBall();
             }
+
             if (e.key.toLowerCase() === 'p') {
-                this.gameState = this.gameState === 'playing' ? 'paused' : 'playing';
+                this.gameState = this.gameState === GAME_STATE.PLAYING ? GAME_STATE.PAUSED : GAME_STATE.PLAYING;
             }
         });
 
@@ -63,11 +67,7 @@ class ArkanoidGame {
         });
 
         this.canvas.addEventListener('click', () => {
-            if (this.ballAttached && this.gameState === 'ready') this.launchBall();
-        });
-
-        window.addEventListener('keydown', (e) => {
-            if (['ArrowLeft', 'ArrowRight'].includes(e.key)) e.preventDefault();
+            if (this.ballAttached && this.gameState === GAME_STATE.READY) this.launchBall();
         });
     }
 
@@ -106,13 +106,13 @@ class ArkanoidGame {
         this.ball.vx = 0;
         this.ball.vy = 0;
         this.ballAttached = true;
-        this.gameState = 'ready';
+        this.gameState = GAME_STATE.READY;
     }
 
     launchBall() {
         if (!this.ballAttached) return;
         this.ballAttached = false;
-        this.gameState = 'playing';
+        this.gameState = GAME_STATE.PLAYING;
 
         const angle = (Math.random() * 40 - 20) * Math.PI / 180;
         this.ball.vx = Math.sin(angle) * this.ball.baseSpeed;
@@ -120,7 +120,7 @@ class ArkanoidGame {
     }
 
     update() {
-        if (this.gameState === 'paused' || this.gameState === 'gameover' || this.gameState === 'levelclear') return;
+        if (this.gameState === GAME_STATE.PAUSED || this.gameState === GAME_STATE.GAME_OVER || this.gameState === GAME_STATE.LEVEL_CLEAR) return;
 
         this.paddle.x = this.mouseX - this.paddle.width / 2;
         if (this.keys['ArrowLeft'] || this.keys['a'] || this.keys['A']) this.paddle.x -= this.paddle.speed;
@@ -144,7 +144,7 @@ class ArkanoidGame {
         if (this.ball.y + this.ball.radius > this.HEIGHT) {
             this.lives--;
             if (this.lives <= 0) {
-                this.gameState = 'gameover';
+                this.gameState = GAME_STATE.GAME_OVER;
             } else {
                 this.resetBall();
             }
@@ -204,7 +204,7 @@ class ArkanoidGame {
         }
 
         if (this.bricks.every(b => !b.visible)) {
-            this.gameState = 'levelclear';
+            this.gameState = GAME_STATE.LEVEL_CLEAR;
             setTimeout(() => {
                 this.level++;
                 this.createLevel();
@@ -214,8 +214,6 @@ class ArkanoidGame {
     }
 
     draw() {
-//        const R = GAME_RESOURCES.COLORS;
-
         this.ctx.fillStyle = this.R.background;
         this.ctx.fillRect(0, 0, this.WIDTH, this.HEIGHT);
 
@@ -262,7 +260,7 @@ class ArkanoidGame {
         this.ctx.fillText(`LIVES ${this.lives}`, this.WIDTH - 158, 22);
         this.ctx.fillText(`LEVEL ${this.level}`, this.WIDTH / 2 - 48, 22);
 
-        if (this.ballAttached && this.gameState === 'ready') {
+        if (this.ballAttached && this.gameState === GAME_STATE.READY) {
             this.ctx.fillStyle = this.R.textReady;
             this.ctx.font = 'bold 26px Courier New';
             this.ctx.textAlign = 'center';
@@ -272,7 +270,7 @@ class ArkanoidGame {
             this.ctx.textAlign = 'left';
         }
 
-        if (this.gameState === 'paused') {
+        if (this.gameState === GAME_STATE.PAUSED) {
             this.ctx.fillStyle = this.R.overlayPaused;
             this.ctx.fillRect(0, 0, this.WIDTH, this.HEIGHT);
             this.ctx.fillStyle = this.R.textPaused;
@@ -282,7 +280,7 @@ class ArkanoidGame {
             this.ctx.textAlign = 'left';
         }
 
-        if (this.gameState === 'gameover') {
+        if (this.gameState === GAME_STATE.GAME_OVER) {
             this.ctx.fillStyle = this.R.overlayGameOver;
             this.ctx.fillRect(0, 0, this.WIDTH, this.HEIGHT);
             this.ctx.fillStyle = this.R.textGameOver;
@@ -295,7 +293,7 @@ class ArkanoidGame {
             this.ctx.textAlign = 'left';
         }
 
-        if (this.gameState === 'levelclear') {
+        if (this.gameState === GAME_STATE.LEVEL_CLEAR) {
             this.ctx.fillStyle = this.R.textLevelClear;
             this.ctx.font = 'bold 42px Courier New';
             this.ctx.textAlign = 'center';
