@@ -158,14 +158,17 @@ class ArkanoidGame {
         }
     }
 
-    update() {
+    update(dt) {
         if (this.gameState === GAME_STATE.PAUSED ||
             this.gameState === GAME_STATE.GAME_OVER ||
             this.gameState === GAME_STATE.LEVEL_CLEAR) return;
 
         this.paddle.x = this.mouseX - this.paddle.width / 2;
-        if (this.keys['ArrowLeft'] || this.keys['a'] || this.keys['A']) this.paddle.x -= this.paddle.speed;
-        if (this.keys['ArrowRight'] || this.keys['d'] || this.keys['D']) this.paddle.x += this.paddle.speed;
+
+        if (this.keys['ArrowLeft'] || this.keys['a'] || this.keys['A'])
+            this.paddle.x -= this.paddle.speed * dt;
+        if (this.keys['ArrowRight'] || this.keys['d'] || this.keys['D'])
+            this.paddle.x += this.paddle.speed * dt;
 
         this.paddle.x = Math.max(
             this.SETTINGS.wallPadding,
@@ -178,8 +181,8 @@ class ArkanoidGame {
             return;
         }
 
-        this.ball.x += this.ball.vx;
-        this.ball.y += this.ball.vy;
+        this.ball.x += this.ball.vx * dt;
+        this.ball.y += this.ball.vy * dt;
 
         if (this.ball.x - this.ball.radius < this.SETTINGS.wallPadding) {
             this.ball.x = this.SETTINGS.wallPadding + this.ball.radius;
@@ -339,8 +342,13 @@ class ArkanoidGame {
         }
     }
 
-    gameLoop = (timestamp) => {
-        this.update();
+    gameLoop = (timestamp = 0) => {
+        if (this.lastTime === 0) this.lastTime = timestamp;
+
+        const dt = Math.min((timestamp - this.lastTime) / 1000, 0.1);
+        this.lastTime = timestamp;
+
+        this.update(dt);
         this.draw();
         requestAnimationFrame(this.gameLoop);
     };
